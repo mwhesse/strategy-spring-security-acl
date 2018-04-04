@@ -79,19 +79,19 @@ public class AclJpaRepository<T, ID extends Serializable> extends SimpleJpaRepos
 
   @Override
   @SuppressWarnings("unchecked")
-  protected <S extends T> TypedQuery<Long> getCountQuery(Specification<S> spec,
+  public <S extends T> TypedQuery<Long> getCountQuery(Specification<S> spec,
       Class<S> domainClass) {
     return super.getCountQuery(((Specification<S>) aclJpaSpec()).and(spec), domainClass);
   }
 
   @Override
   @SuppressWarnings("unchecked")
-  protected <S extends T> TypedQuery<S> getQuery(Specification<S> spec, Class<S> domainClass,
-        Sort sort) {
+  public <S extends T> TypedQuery<S> getQuery(Specification<S> spec, Class<S> domainClass,
+      Sort sort) {
     return super.getQuery(((Specification<S>) aclJpaSpec()).and(spec), domainClass, sort);
   }
 
-  private Specification<T> aclJpaSpec() {
+  Specification<T> aclJpaSpec() {
     Specification<T> spec = jpaSpecProvider.jpaSpecFor(getDomainClass());
     logger.debug("Using ACL JPA specification for objects '{}': {}",
         getDomainClass().getSimpleName(), spec);

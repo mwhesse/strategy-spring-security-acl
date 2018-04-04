@@ -40,6 +40,7 @@
 		<module>elasticsearch</module>
 		<module>grant</module>
 		<module>jpa</module>
+		<module>querydsl</module>
 		<module>sample</module>
 	</modules>
 
