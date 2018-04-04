@@ -92,8 +92,8 @@ public class MultithreadCustomerRepositoryTest {
 
     @Test
     public void should_test_customer_existance() throws InterruptedException {
-        prepareTaskAs(() -> assertThat(repository.exists(johnDoe.getId())).isFalse(), "Smith");
-        prepareTaskAs(() -> assertThat(repository.exists(johnDoe.getId())).isTrue(), "Doe");
+        prepareTaskAs(() -> assertThat(repository.existsById(johnDoe.getId())).isFalse(), "Smith");
+        prepareTaskAs(() -> assertThat(repository.existsById(johnDoe.getId())).isTrue(), "Doe");
         waitForAssertions();
     }
 
@@ -108,8 +108,8 @@ public class MultithreadCustomerRepositoryTest {
 
     @Test
     public void should_find_authorized_customers_using_specific_ids() throws InterruptedException {
-        prepareTaskAs(() -> assertThat(repository.findAll(customerIds())).containsOnly(aliceSmith, bobSmith), "Smith");
-        prepareTaskAs(() ->  assertThat(repository.findAll(customerIds())).containsOnly(johnDoe), "Doe");
+        prepareTaskAs(() -> assertThat(repository.findAllById(customerIds())).containsOnly(aliceSmith, bobSmith), "Smith");
+        prepareTaskAs(() ->  assertThat(repository.findAllById(customerIds())).containsOnly(johnDoe), "Doe");
         waitForAssertions();
     }
 
@@ -137,10 +137,10 @@ public class MultithreadCustomerRepositoryTest {
 
     @Test
     public void should_findOne_with_method_query() throws InterruptedException {
-        prepareTaskAs(() -> assertThat(repository.findOne(johnDoe.getId())).isNull(), "Smith");
-        prepareTaskAs(() -> assertThat(repository.findOne(johnDoe.getId())).isEqualTo(johnDoe), "Doe");
-        prepareTaskAs(() -> assertThat(repository.findOne(aliceSmith.getId())).isEqualTo(aliceSmith), "Smith");
-        prepareTaskAs(() -> assertThat(repository.findOne(aliceSmith.getId())).isNull(), "Doe");
+        prepareTaskAs(() -> assertThat(repository.findById(johnDoe.getId())).isNotPresent(), "Smith");
+        prepareTaskAs(() -> assertThat(repository.findById(johnDoe.getId())).contains(johnDoe), "Doe");
+        prepareTaskAs(() -> assertThat(repository.findById(aliceSmith.getId())).contains(aliceSmith), "Smith");
+        prepareTaskAs(() -> assertThat(repository.findById(aliceSmith.getId())).isNotPresent(), "Doe");
         waitForAssertions();
     }
 

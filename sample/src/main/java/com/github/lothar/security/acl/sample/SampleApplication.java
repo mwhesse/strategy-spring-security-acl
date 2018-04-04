@@ -15,15 +15,21 @@ package com.github.lothar.security.acl.sample;
 
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 
+import javax.annotation.PreDestroy;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.elasticsearch.client.NodeClientFactoryBean;
+import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -49,6 +55,12 @@ import com.github.lothar.security.acl.sample.jpa.CustomerRepository;
 public class SampleApplication {
 
   private SimpleAclStrategy customerStrategy = new SimpleAclStrategy();
+
+  @Autowired
+  private ElasticsearchProperties properties;
+
+  @Autowired
+  private Client nodeClientFactoryBean;
 
   public static void main(String[] args) {
     SpringApplication.run(SampleApplication.class, args);
@@ -87,5 +99,23 @@ public class SampleApplication {
     return smithFamilyGrantEvaluator;
   }
 
+  @Bean
+  public ElasticsearchTemplate elasticsearchTemplate(final Client nodeClientFactoryBean) {
+    return new ElasticsearchTemplate(nodeClientFactoryBean);
+  }
 
+  @Bean
+  public NodeClientFactoryBean nodeClientFactoryBean() {
+    final NodeClientFactoryBean clientFactorybean = new NodeClientFactoryBean(true);
+    clientFactorybean.setClusterName(properties.getClusterName());
+    clientFactorybean.setEnableHttp(Boolean.valueOf(properties.getProperties().getOrDefault("http.enabled", "true")));
+    clientFactorybean.setPathData(properties.getProperties().get("path.data"));
+    clientFactorybean.setPathHome(properties.getProperties().get("path.home"));
+    return clientFactorybean;
+  }
+
+  @PreDestroy
+  public void destroy() {
+    nodeClientFactoryBean.close();
+  }
 }

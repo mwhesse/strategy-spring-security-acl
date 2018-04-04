@@ -16,9 +16,10 @@
 package com.github.lothar.security.acl.jpa.repository;
 
 import static com.github.lothar.security.acl.jpa.spec.AclJpaSpecifications.idEqualTo;
-import static org.springframework.data.jpa.domain.Specifications.where;
+import static org.springframework.data.jpa.domain.Specification.where;
 
 import java.io.Serializable;
+import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
@@ -28,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.domain.Specifications;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 
@@ -60,39 +60,38 @@ public class AclJpaRepository<T, ID extends Serializable> extends SimpleJpaRepos
   }
 
   @Override
-  public boolean exists(ID id) {
-    return findOne(id) != null;
+  public boolean existsById(ID id) {
+    return findById(id).isPresent();
   }
 
   @Override
-  public T findOne(ID id) {
-    return super.findOne(idEqualTo(id));
+  @SuppressWarnings("unchecked")
+  public Optional<T> findById(ID id) {
+    return super.findOne((Specification<T>) idEqualTo(id));
   }
 
   @Override
   public T getOne(ID id) {
-    T entity = this.findOne(id);
-    if (entity == null) {
-      throw new EntityNotFoundException("Unable to find " + getDomainClass().getName() + " with id " + id);
+    return this.findById(id)
+        .orElseThrow(
+            () -> new EntityNotFoundException("Unable to find " + getDomainClass().getName() + " with id " + id));
     }
-    return entity;
-  }
 
   @Override
   @SuppressWarnings("unchecked")
   protected <S extends T> TypedQuery<Long> getCountQuery(Specification<S> spec,
       Class<S> domainClass) {
-    return super.getCountQuery(((Specifications<S>)aclJpaSpec()).and(spec), domainClass);
+    return super.getCountQuery(((Specification<S>) aclJpaSpec()).and(spec), domainClass);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   protected <S extends T> TypedQuery<S> getQuery(Specification<S> spec, Class<S> domainClass,
         Sort sort) {
-    return super.getQuery(((Specifications<S>) aclJpaSpec()).and(spec), domainClass, sort);
+    return super.getQuery(((Specification<S>) aclJpaSpec()).and(spec), domainClass, sort);
   }
 
-  private Specifications<T> aclJpaSpec() {
+  private Specification<T> aclJpaSpec() {
     Specification<T> spec = jpaSpecProvider.jpaSpecFor(getDomainClass());
     logger.debug("Using ACL JPA specification for objects '{}': {}",
         getDomainClass().getSimpleName(), spec);

@@ -1,12 +1,20 @@
+
 spring:
     data:
         elasticsearch:
-            cluster-name:
-            cluster-nodes:
+            cluster-name: "#{T(java.util.UUID).randomUUID().toString()}"
+            cluster-nodes: localhost:9300
             properties:
+                http:
+                    enabled: false
                 path:
                     logs: target/elasticsearch/log
                     data: target/elasticsearch/data
+                    home: src/test/resources/path.home
+                client:
+                    type: local
+            repositories:
+                enabled: true
 logging:
     level:
         com.github.lothar.security.acl: debug

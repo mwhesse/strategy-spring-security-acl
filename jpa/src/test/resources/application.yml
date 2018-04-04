@@ -8,6 +8,7 @@ spring:
             hibernate.format_sql: true
 logging:
     level:
+        com.github.lothar.security.acl.Acl: info
 #         org.hibernate.SQL: debug
 #         org.hibernate.type: trace
 #         com.github.lothar.security.acl: debug

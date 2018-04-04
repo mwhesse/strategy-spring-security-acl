@@ -15,24 +15,22 @@
  *******************************************************************************/
 package com.github.lothar.security.acl.elasticsearch.compound;
 
-import static org.elasticsearch.index.query.QueryBuilders.andQuery;
-import static org.elasticsearch.index.query.QueryBuilders.orQuery;
+import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 
 import org.elasticsearch.index.query.QueryBuilder;
 
 import com.github.lothar.security.acl.compound.AclComposer;
 
-@SuppressWarnings("deprecation")
 public class FilterBuilderComposer implements AclComposer<QueryBuilder> {
 
   @Override
   public QueryBuilder and(QueryBuilder lhs, QueryBuilder rhs) {
-    return andQuery(lhs, rhs);
+    return boolQuery().must(lhs).must(rhs);
   }
 
   @Override
   public QueryBuilder or(QueryBuilder lhs, QueryBuilder rhs) {
-    return orQuery(lhs, rhs);
+    return boolQuery().should(lhs).should(rhs).minimumShouldMatch(1);
   }
 
 }

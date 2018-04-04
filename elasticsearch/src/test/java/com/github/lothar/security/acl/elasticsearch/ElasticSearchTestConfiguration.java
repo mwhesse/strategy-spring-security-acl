@@ -15,9 +15,16 @@ package com.github.lothar.security.acl.elasticsearch;
 
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 
+import javax.annotation.PreDestroy;
+
+import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.elasticsearch.client.NodeClientFactoryBean;
+import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
 
 import com.github.lothar.security.acl.AclStrategy;
@@ -25,11 +32,16 @@ import com.github.lothar.security.acl.SimpleAclStrategy;
 import com.github.lothar.security.acl.elasticsearch.repository.AclElasticsearchRepositoryFactoryBean;
 
 @SpringBootApplication
-@EnableElasticsearchRepositories(value = "com.github.lothar.security.acl.elasticsearch.repository",
-    repositoryFactoryBeanClass = AclElasticsearchRepositoryFactoryBean.class)
+@EnableElasticsearchRepositories(value = "com.github.lothar.security.acl.elasticsearch.repository", repositoryFactoryBeanClass = AclElasticsearchRepositoryFactoryBean.class)
 public class ElasticSearchTestConfiguration {
 
-  private SimpleAclStrategy customerStrategy = new SimpleAclStrategy();
+  private final SimpleAclStrategy customerStrategy = new SimpleAclStrategy();
+
+  @Autowired
+  private ElasticsearchProperties properties;
+
+  @Autowired
+  private Client nodeClientFactoryBean;
 
   @Bean
   public AclStrategy withoutHandlerStrategy() {
@@ -42,9 +54,30 @@ public class ElasticSearchTestConfiguration {
   }
 
   @Bean
-  public MatchQueryBuilder smithFamilyFilter(ElasticSearchFeature elasticSearchFeature) {
-    MatchQueryBuilder smithFamilyFilter = matchQuery("lastName", "Smith");
+  public MatchQueryBuilder smithFamilyFilter(final ElasticSearchFeature elasticSearchFeature) {
+    final MatchQueryBuilder smithFamilyFilter = matchQuery("lastName", "Smith");
     customerStrategy.install(elasticSearchFeature, smithFamilyFilter);
     return smithFamilyFilter;
   }
+
+  @Bean
+  public ElasticsearchTemplate elasticsearchTemplate(final Client nodeClientFactoryBean) {
+    return new ElasticsearchTemplate(nodeClientFactoryBean);
+  }
+
+  @Bean
+  public NodeClientFactoryBean nodeClientFactoryBean() {
+    final NodeClientFactoryBean clientFactorybean = new NodeClientFactoryBean(true);
+    clientFactorybean.setClusterName(properties.getClusterName());
+    clientFactorybean.setEnableHttp(Boolean.valueOf(properties.getProperties().getOrDefault("http.enabled", "true")));
+    clientFactorybean.setPathData(properties.getProperties().get("path.data"));
+    clientFactorybean.setPathHome(properties.getProperties().get("path.home"));
+    return clientFactorybean;
+  }
+
+  @PreDestroy
+  public void destroy() {
+    nodeClientFactoryBean.close();
+  }
+
 }

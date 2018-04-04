@@ -15,11 +15,14 @@ package com.github.lothar.security.acl.jpa.repository;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import javax.annotation.Resource;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -89,7 +92,12 @@ public class CustomerRepositoryTest {
 
   @Test
   public void should_count_all_customers_only_when_strategy_not_applied() {
-    doWithoutCustomerSpec(() -> assertThat(repository.count()).isEqualTo(3));
+    doWithoutCustomerSpec(new Runnable() {
+      @Override
+      public void run() {
+        assertThat(repository.count()).isEqualTo(3);
+      }
+    });
   }
 
   @Test
@@ -114,12 +122,12 @@ public class CustomerRepositoryTest {
 
   @Test
   public void should_not_say_exist_members_of_Doe_family_with_method_query() {
-    assertThat(repository.exists(johnDoe.getId())).isFalse();
+    assertThat(repository.existsById(johnDoe.getId())).isFalse();
   }
 
   @Test
   public void should_say_exist_members_of_Smith_family_with_method_query() {
-    assertThat(repository.exists(aliceSmith.getId())).isTrue();
+    assertThat(repository.existsById(aliceSmith.getId())).isTrue();
   }
 
   // findAll
@@ -131,17 +139,27 @@ public class CustomerRepositoryTest {
 
   @Test
   public void should_find_all_customers_only_when_strategy_not_applied() {
-    doWithoutCustomerSpec(() -> assertThat(repository.findAll()).containsOnly(aliceSmith, bobSmith, johnDoe));
+    doWithoutCustomerSpec(new Runnable() {
+      @Override
+      public void run() {
+        assertThat(repository.findAll()).containsOnly(aliceSmith, bobSmith, johnDoe);
+      }
+    });
   }
 
   @Test
   public void should_find_authorized_customers_using_specific_ids_only_when_strategy_applied() {
-    assertThat(repository.findAll(customerIds())).containsOnly(aliceSmith, bobSmith);
+    assertThat(repository.findAllById(customerIds())).containsOnly(aliceSmith, bobSmith);
   }
 
   @Test
   public void should_find_all_customers_using_specific_ids_only_when_strategy_not_applied() {
-    doWithoutCustomerSpec(() -> assertThat(repository.findAll(customerIds())).containsOnly(aliceSmith, bobSmith, johnDoe));
+    doWithoutCustomerSpec(new Runnable() {
+      @Override
+      public void run() {
+        assertThat(repository.findAllById(customerIds())).containsOnly(aliceSmith, bobSmith, johnDoe);
+      }
+    });
   }
 
   // findByLastName
@@ -172,12 +190,12 @@ public class CustomerRepositoryTest {
 
   @Test
   public void should_not_findOne_member_of_Doe_family_with_method_query() {
-    assertThat(repository.findOne(johnDoe.getId())).isNull();
+    assertThat(repository.findById(johnDoe.getId())).isNotPresent();
   }
 
   @Test
   public void should_findOne_member_of_Smith_family_with_method_query() {
-    assertThat(repository.findOne(aliceSmith.getId())).isSameAs(aliceSmith);
+    assertThat(repository.findById(aliceSmith.getId())).containsSame(aliceSmith);
   }
 
   // getOne
@@ -201,7 +219,7 @@ public class CustomerRepositoryTest {
       repository.countByLastName("Smith");
       repository.findByFirstName("John");
       repository.findByLastName("Smith");
-      verify(spy, times(3)).toPredicate(any(), any(), any());
+      verify(spy, times(3)).toPredicate(any(Root.class), any(CriteriaQuery.class), any(CriteriaBuilder.class));
     } finally {
       customerStrategy.install(jpaSpecFeature, customerSpec);
     }
@@ -225,13 +243,13 @@ public class CustomerRepositoryTest {
   @Test
   @Ignore
   public void should_find_members_of_Smith_family_with_sortable_query_method() {
-    assertThat(repository.findByFirstNameContains("o", new Sort("id"))).containsOnly(bobSmith);
+    assertThat(repository.findByFirstNameContains("o", Sort.by("id"))).containsOnly(bobSmith);
   }
 
   @Test
   @Ignore
   public void should_find_members_of_Smith_family_with_pageable_query_method() {
-    assertThat(repository.findByFirstNameContains("o", new PageRequest(0, 10))).containsOnly(bobSmith);
+    assertThat(repository.findByFirstNameContains("o", PageRequest.of(0, 10))).containsOnly(bobSmith);
   }
 
   // utils

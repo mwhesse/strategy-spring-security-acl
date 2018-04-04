@@ -41,6 +41,17 @@ public class AclElasticsearchRepositoryFactoryBean<T extends Repository<S, ID>, 
   @Resource
   private AclFilterProvider filterProvider;
 
+  /**
+   * Creates a new {@link ElasticsearchRepositoryFactoryBean} for the given repository interface.
+   * 
+   * @param repositoryInterface
+   *          must not be {@literal null}.
+   */
+  public AclElasticsearchRepositoryFactoryBean(final Class<? extends T> repositoryInterface) {
+    super(repositoryInterface);
+  }
+
+  @Override
   public void setElasticsearchOperations(ElasticsearchOperations operations) {
     super.setElasticsearchOperations(operations);
     this.operations = operations;

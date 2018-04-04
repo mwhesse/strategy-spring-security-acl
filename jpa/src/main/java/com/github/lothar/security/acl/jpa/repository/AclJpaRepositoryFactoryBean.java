@@ -18,6 +18,7 @@ import static org.springframework.util.ReflectionUtils.findMethod;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Optional;
 
 import javax.annotation.Resource;
 import javax.persistence.EntityManager;
@@ -48,9 +49,14 @@ import com.github.lothar.security.acl.jpa.query.AclJpaQuery;
 public class AclJpaRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable>
     extends JpaRepositoryFactoryBean<T, S, ID> {
 
+  public AclJpaRepositoryFactoryBean(final Class<? extends T> repositoryInterface) {
+    super(repositoryInterface);
+  }
+
   @Resource
   private JpaSpecProvider<Object> jpaSpecProvider;
 
+  @Override
   protected RepositoryFactorySupport createRepositoryFactory(EntityManager entityManager) {
     return new Factory(entityManager);
   }
@@ -73,11 +79,12 @@ public class AclJpaRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
     }
 
     @Override
-    protected QueryLookupStrategy getQueryLookupStrategy(Key key,
+    protected Optional<QueryLookupStrategy> getQueryLookupStrategy(Key key,
         EvaluationContextProvider evaluationContextProvider) {
-      return new AclQueryLookupStrategy(key, evaluationContextProvider);
+      return Optional.of(new AclQueryLookupStrategy(key, evaluationContextProvider));
     }
 
+    @Override
     protected SimpleJpaRepository<?, ?> getTargetRepository(RepositoryInformation information,
         EntityManager entityManager) {
       Class<?> domainType = information.getDomainType();
@@ -116,13 +123,13 @@ public class AclJpaRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
       @SuppressWarnings("unused")
       public RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata,
           NamedQueries namedQueries) {
-        QueryLookupStrategy queryLookupStrategy =
+        Optional<QueryLookupStrategy> queryLookupStrategy =
             Factory.super.getQueryLookupStrategy(key, evaluationContextProvider);
 
         Method resolveQuery = findMethod(QueryLookupStrategy.class, "resolveQuery",
                 Method.class, RepositoryMetadata.class, NamedQueries.class);
         try {
-            RepositoryQuery query = (RepositoryQuery) resolveQuery.invoke(queryLookupStrategy, method, 
+          RepositoryQuery query = (RepositoryQuery) resolveQuery.invoke(queryLookupStrategy.get(), method,
                     metadata, namedQueries);
             return wrapQuery(method, metadata, query);
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
@@ -133,12 +140,13 @@ public class AclJpaRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exte
       /**
        * @since Spring data JPA 1.10.0
        */
+      @Override
       public RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata,
             ProjectionFactory factory, NamedQueries namedQueries) {
-        QueryLookupStrategy queryLookupStrategy =
+        Optional<QueryLookupStrategy> queryLookupStrategy =
             Factory.super.getQueryLookupStrategy(key, evaluationContextProvider);
 
-        RepositoryQuery query = queryLookupStrategy.resolveQuery(method, metadata, factory, namedQueries);
+        RepositoryQuery query = queryLookupStrategy.get().resolveQuery(method, metadata, factory, namedQueries);
         return wrapQuery(method, metadata, query);
       }
 

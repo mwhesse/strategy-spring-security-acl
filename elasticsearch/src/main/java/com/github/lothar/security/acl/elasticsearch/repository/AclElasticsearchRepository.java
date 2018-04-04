@@ -15,7 +15,6 @@ package com.github.lothar.security.acl.elasticsearch.repository;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
-import static org.elasticsearch.index.query.QueryBuilders.andQuery;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.idsQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
@@ -23,6 +22,8 @@ import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.elasticsearch.index.query.QueryBuilder;
 import org.slf4j.Logger;
@@ -69,12 +70,12 @@ public class AclElasticsearchRepository<T, ID extends Serializable>
   }
 
   @Override
-  public T findOne(ID id) {
+  public Optional<T> findById(ID id) {
     SearchQuery query = new NativeSearchQueryBuilder() //
-        .withQuery(and(idsQuery().ids(stringIdRepresentation(id)), aclFilter())) //
+        .withQuery(and(idsQuery().addIds(stringIdRepresentation(id)), aclFilter())) //
         .build();
     List<T> list = elasticsearchOperations.queryForList(query, getEntityClass());
-    return list.isEmpty() ? null : list.get(0);
+    return Optional.ofNullable(list.isEmpty() ? null : list.get(0));
   }
 
   @Override
@@ -94,17 +95,17 @@ public class AclElasticsearchRepository<T, ID extends Serializable>
     }
     SearchQuery query = new NativeSearchQueryBuilder() //
         .withQuery(and(matchAllQuery(), aclFilter())) //
-        .withPageable(new PageRequest(0, itemCount, sort)) //
+        .withPageable(PageRequest.of(0, itemCount, sort)) //
         .build();
     return elasticsearchOperations.queryForPage(query, getEntityClass());
   }
 
   @Override
-  public Iterable<T> findAll(Iterable<ID> ids) {
+  public Iterable<T> findAllById(Iterable<ID> ids) {
     Assert.notNull(ids, "ids can't be null.");
 
     SearchQuery query = new NativeSearchQueryBuilder() //
-        .withQuery(and(idsQuery().ids(idsArray(ids)), aclFilter())) //
+        .withQuery(and(idsQuery().addIds(idsArray(ids)), aclFilter())) //
         .build();
     return elasticsearchOperations.queryForList(query, getEntityClass());
   }
@@ -166,6 +167,8 @@ public class AclElasticsearchRepository<T, ID extends Serializable>
 
   @SuppressWarnings("deprecation")
   private QueryBuilder and(QueryBuilder... queryBuilders) {
-      return boolQuery().must(andQuery(queryBuilders));
+    return Stream.of(queryBuilders)
+        .reduce((a, b) -> boolQuery().must(a).must(b))
+        .orElse(null);
   }
 }

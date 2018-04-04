@@ -30,68 +30,68 @@ import com.github.lothar.security.acl.Acl;
 @Acl("customerStrategy")
 public class Customer implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-	private String id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private String id;
 
-	private String firstName;
+  private String firstName;
 
-	private String lastName;
+  private String lastName;
 
-	public Customer() {
-	}
+  public Customer() {
+  }
 
-	public Customer(String firstName, String lastName) {
-		this.firstName = firstName;
-		this.lastName = lastName;
-	}
+  public Customer(String firstName, String lastName) {
+    this.firstName = firstName;
+    this.lastName = lastName;
+  }
 
-	public String getId() {
-		return this.id;
-	}
+  public String getId() {
+    return this.id;
+  }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+  public void setId(String id) {
+    this.id = id;
+  }
 
-	public String getFirstName() {
-		return this.firstName;
-	}
+  public String getFirstName() {
+    return this.firstName;
+  }
 
-	public void setFirstName(String firstName) {
-		this.firstName = firstName;
-	}
+  public void setFirstName(String firstName) {
+    this.firstName = firstName;
+  }
 
-	public String getLastName() {
-		return this.lastName;
-	}
+  public String getLastName() {
+    return this.lastName;
+  }
 
-	public void setLastName(String lastName) {
-		this.lastName = lastName;
-	}
+  public void setLastName(String lastName) {
+    this.lastName = lastName;
+  }
 
-	@Override
-	public String toString() {
-		return String.format("Customer[id=%s, firstName='%s', lastName='%s']", this.id,
-				this.firstName, this.lastName);
-	}
+  @Override
+  public String toString() {
+    return String.format("Customer[id=%s, firstName='%s', lastName='%s']", this.id,
+        this.firstName, this.lastName);
+  }
 
-	@Override
-	public boolean equals(Object obj) {
-	    if (obj == null) {
-	        return false;
-	    }
-	    if (!(obj instanceof Customer)) {
-	        return false;
-	    }
-	    Customer customer = (Customer) obj;
-	    return Objects.equals(this.id, customer.id);
-	}
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
+    }
+    if (!(obj instanceof Customer)) {
+      return false;
+    }
+    Customer customer = (Customer) obj;
+    return Objects.equals(this.id, customer.id);
+  }
 
-	@Override
-	public int hashCode() {
-	    return Objects.hash(id);
-	}
+  @Override
+  public int hashCode() {
+    return Objects.hash(id);
+  }
 }

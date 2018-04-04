@@ -22,47 +22,49 @@ import org.springframework.aop.TargetSource;
 
 public class AclPredicateTargetSource implements TargetSource {
 
-    private Logger logger = LoggerFactory.getLogger(getClass());
-    private Predicate original;
-    private Predicate current;
-    private CriteriaBuilder criteriaBuilder;
+  private Logger logger = LoggerFactory.getLogger(getClass());
+  private Predicate original;
+  private Predicate current;
+  private CriteriaBuilder criteriaBuilder;
 
-    public AclPredicateTargetSource(CriteriaBuilder criteriaBuilder, Predicate original) {
-        this.criteriaBuilder = criteriaBuilder;
-        this.original = original;
-        setCurrent(original);
-        logger.debug("Original predicate : {}", original);
+  public AclPredicateTargetSource(CriteriaBuilder criteriaBuilder, Predicate original) {
+    this.criteriaBuilder = criteriaBuilder;
+    this.original = original;
+    setCurrent(original);
+    logger.debug("Original predicate : {}", original);
+  }
+
+  public void installAcl(Predicate aclPredicate) {
+    if (aclPredicate != null) {
+      Predicate enhancedPredicate = criteriaBuilder.and(original, aclPredicate);
+      setCurrent(enhancedPredicate);
+      logger.debug("Enhanced predicate : {}", enhancedPredicate);
     }
+  }
 
-    public void installAcl(Predicate aclPredicate) {
-        Predicate enhancedPredicate = criteriaBuilder.and(original, aclPredicate);
-        setCurrent(enhancedPredicate);
-        logger.debug("Enhanced predicate : {}", enhancedPredicate);
-    }
+  public void uninstallAcl() {
+    setCurrent(original);
+  }
 
-    public void uninstallAcl() {
-        setCurrent(original);
-    }
+  @Override
+  public Class<?> getTargetClass() {
+    return getTarget().getClass();
+  }
 
-    @Override
-    public Class<?> getTargetClass() {
-        return getTarget().getClass();
-    }
+  @Override
+  public boolean isStatic() {
+    return false;
+  }
 
-    @Override
-    public boolean isStatic() {
-        return false;
-    }
+  @Override
+  public Object getTarget() {
+    return current;
+  }
 
-    @Override
-    public Object getTarget() {
-        return current;
-    }
+  @Override
+  public void releaseTarget(Object target) throws Exception {}
 
-    @Override
-    public void releaseTarget(Object target) throws Exception {}
-
-    private void setCurrent(Predicate predicate) {
-        this.current = predicate;
-    }
+  private void setCurrent(Predicate predicate) {
+    this.current = predicate;
+  }
 }

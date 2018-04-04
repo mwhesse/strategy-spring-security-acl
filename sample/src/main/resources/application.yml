@@ -4,12 +4,15 @@ spring:
             ddl-auto: create
     data:
         elasticsearch:
-            cluster-name:
-            cluster-nodes:
+            cluster-name: "#{T(java.util.UUID).randomUUID().toString()}"
+            cluster-nodes: localhost:9300
             properties:
                 path:
                     logs: target/elasticsearch/log
                     data: target/elasticsearch/data
+                    home: src/test/resources/path.home
+            repositories:
+                enabled: true
 logging:
     level:
         org.hibernate.SQL: debug
