@@ -23,6 +23,7 @@ import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
 
 import org.slf4j.Logger;
@@ -31,13 +32,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
+import org.springframework.util.ReflectionUtils;
 
 import com.github.lothar.security.acl.jpa.JpaSpecProvider;
+import com.github.lothar.security.acl.jpa.annotation.NoAcl;
 
 public class AclJpaRepository<T, ID extends Serializable> extends SimpleJpaRepository<T, ID> {
 
   private Logger logger = LoggerFactory.getLogger(getClass());
   private JpaSpecProvider<T> jpaSpecProvider;
+  private Class<?> repositoryInterface;
 
   public AclJpaRepository(Class<T> domainClass, EntityManager em,
       JpaSpecProvider<T> jpaSpecProvider) {
@@ -48,9 +52,11 @@ public class AclJpaRepository<T, ID extends Serializable> extends SimpleJpaRepos
   // reflection invocation by
   // com.github.lothar.security.acl.jpa.repository.AclJpaRepositoryFactoryBean.Factory.getTargetRepository(RepositoryInformation,
   // EntityManager)
-  public AclJpaRepository(JpaEntityInformation<T, ?> entityInformation, EntityManager entityManager,
+  public AclJpaRepository(JpaEntityInformation<T, ?> entityInformation, Class<?> repositoryInterface,
+      EntityManager entityManager,
       JpaSpecProvider<T> jpaSpecProvider) {
     super(entityInformation, entityManager);
+    this.repositoryInterface = repositoryInterface;
     this.jpaSpecProvider = jpaSpecProvider;
   }
 
@@ -67,6 +73,17 @@ public class AclJpaRepository<T, ID extends Serializable> extends SimpleJpaRepos
   @Override
   @SuppressWarnings("unchecked")
   public Optional<T> findById(ID id) {
+
+    // check if repository has @NoAcl on method findById()
+    // if that's the case we don't want to apply aclJpaSpec()
+    if (ReflectionUtils.findMethod(repositoryInterface, "findById", Object.class).getAnnotation(NoAcl.class) != null) {
+      try {
+        return Optional.of(super.getQuery(idEqualTo(id), getDomainClass(), Sort.unsorted()).getSingleResult());
+      } catch (final NoResultException e) {
+        return Optional.empty();
+      }
+    }
+
     return super.findOne((Specification<T>) idEqualTo(id));
   }
 
@@ -75,7 +92,7 @@ public class AclJpaRepository<T, ID extends Serializable> extends SimpleJpaRepos
     return this.findById(id)
         .orElseThrow(
             () -> new EntityNotFoundException("Unable to find " + getDomainClass().getName() + " with id " + id));
-    }
+  }
 
   @Override
   @SuppressWarnings("unchecked")

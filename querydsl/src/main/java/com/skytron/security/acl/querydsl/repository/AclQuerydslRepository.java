@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.support.CrudMethodMetadata;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.QuerydslJpaRepository;
 import org.springframework.data.querydsl.EntityPathResolver;
@@ -28,21 +29,22 @@ public class AclQuerydslRepository<T, ID extends Serializable> extends QuerydslJ
   private final AclJpaRepository<T, ID> aclJpaRepository;
   private final QuerydslPredicateProvider<T> querydslPredicateProvider;
 
-  public AclQuerydslRepository(final JpaEntityInformation<T, ID> entityInformation, final EntityManager em,
-      final EntityPathResolver resolver,
+  public AclQuerydslRepository(final JpaEntityInformation<T, ID> entityInformation, final Class<?> repositoryInterface,
+      final EntityManager em, final EntityPathResolver resolver,
       final JpaSpecProvider<T> jpaSpecProvider, final QuerydslPredicateProvider<T> querydslPredicateProvider) {
     super(entityInformation, em, resolver);
-    this.aclJpaRepository = new AclJpaRepository<>(entityInformation, em, jpaSpecProvider);
+    this.aclJpaRepository = new AclJpaRepository<>(entityInformation, repositoryInterface, em, jpaSpecProvider);
     this.querydslPredicateProvider = querydslPredicateProvider;
   }
 
   // reflection invocation by
   // com.github.lothar.security.acl.jpa.repository.AclJpaRepositoryFactoryBean.Factory.getTargetRepository(RepositoryInformation,
   // EntityManager)
-  public AclQuerydslRepository(final JpaEntityInformation<T, ID> entityInformation, final EntityManager em,
+  public AclQuerydslRepository(final JpaEntityInformation<T, ID> entityInformation, final Class<?> repositoryInterface,
+      final EntityManager em,
       final JpaSpecProvider<T> jpaSpecProvider, final QuerydslPredicateProvider<T> querydslPredicateProvider) {
     super(entityInformation, em);
-    this.aclJpaRepository = new AclJpaRepository<>(entityInformation, em, jpaSpecProvider);
+    this.aclJpaRepository = new AclJpaRepository<>(entityInformation, repositoryInterface, em, jpaSpecProvider);
     this.querydslPredicateProvider = querydslPredicateProvider;
   }
 
@@ -110,6 +112,12 @@ public class AclQuerydslRepository<T, ID extends Serializable> extends QuerydslJ
     logger.debug("Using ACL Querydsl predicate for objects '{}': {}",
         getDomainClass().getSimpleName(), predicate);
     return predicate;
+  }
+
+  @Override
+  public void setRepositoryMethodMetadata(final CrudMethodMetadata crudMethodMetadata) {
+    super.setRepositoryMethodMetadata(crudMethodMetadata);
+    this.aclJpaRepository.setRepositoryMethodMetadata(crudMethodMetadata);
   }
 
   @Override

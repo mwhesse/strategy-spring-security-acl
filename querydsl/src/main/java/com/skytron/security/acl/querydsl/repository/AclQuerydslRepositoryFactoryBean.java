@@ -88,7 +88,8 @@ public class AclQuerydslRepositoryFactoryBean<T extends Repository<S, ID>, S, ID
       // com.github.lothar.security.acl.jpa.repository.AclQuerydslRepository.AclQuerydslRepository(JpaEntityInformation<T,
       // ?>, EntityManager, JpaSpecProvider<T>, QuerydslPredicateProvider<T>)
       final SimpleJpaRepository<?, ?> repository = getTargetRepositoryViaReflection(information,
-          entityInformation, entityManager, jpaSpecProvider, querydslPredicateProvider);
+          entityInformation, information.getRepositoryInterface(), entityManager, jpaSpecProvider,
+          querydslPredicateProvider);
       logger.debug("Created {}", repository);
 
       return repository;
