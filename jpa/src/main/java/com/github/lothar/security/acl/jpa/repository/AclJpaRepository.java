@@ -41,7 +41,7 @@ public class AclJpaRepository<T, ID extends Serializable> extends SimpleJpaRepos
 
   private Logger logger = LoggerFactory.getLogger(getClass());
   private JpaSpecProvider<T> jpaSpecProvider;
-  private Class<?> repositoryInterface;
+  private boolean useAclPredicateForFindBy;
 
   public AclJpaRepository(Class<T> domainClass, EntityManager em,
       JpaSpecProvider<T> jpaSpecProvider) {
@@ -56,8 +56,14 @@ public class AclJpaRepository<T, ID extends Serializable> extends SimpleJpaRepos
       EntityManager entityManager,
       JpaSpecProvider<T> jpaSpecProvider) {
     super(entityInformation, entityManager);
-    this.repositoryInterface = repositoryInterface;
     this.jpaSpecProvider = jpaSpecProvider;
+
+    // check if repository has @NoAcl on method findById()
+    // if that's the case we don't want to apply aclJpaSpec()
+    useAclPredicateForFindBy = ReflectionUtils.findMethod(repositoryInterface, "findById", Object.class)
+        .getAnnotation(NoAcl.class) == null;
+
+    logger.debug("Use filter query on findById: {}", useAclPredicateForFindBy);
   }
 
   @Override
@@ -73,10 +79,7 @@ public class AclJpaRepository<T, ID extends Serializable> extends SimpleJpaRepos
   @Override
   @SuppressWarnings("unchecked")
   public Optional<T> findById(ID id) {
-
-    // check if repository has @NoAcl on method findById()
-    // if that's the case we don't want to apply aclJpaSpec()
-    if (ReflectionUtils.findMethod(repositoryInterface, "findById", Object.class).getAnnotation(NoAcl.class) != null) {
+    if (!useAclPredicateForFindBy) {
       try {
         return Optional.of(super.getQuery(idEqualTo(id), getDomainClass(), Sort.unsorted()).getSingleResult());
       } catch (final NoResultException e) {
