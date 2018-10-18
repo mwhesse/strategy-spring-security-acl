@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.github.lothar.security.acl</groupId>
     <artifactId>strategy-spring-security-acl-parent</artifactId>
-    <version>1.6.0-SNAPSHOT</version>
+    <version>1.6.1-mwhesse-SNAPSHOT</version>
   </parent>
 
   <artifactId>strategy-spring-security-acl-querydsl</artifactId>
