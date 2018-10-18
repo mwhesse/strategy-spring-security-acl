@@ -4,7 +4,7 @@
 
 	<groupId>com.github.lothar.security.acl</groupId>
 	<artifactId>strategy-spring-security-acl-parent</artifactId>
-	<version>1.6.1-mwhesse-RELEASE</version>
+	<version>1.6.2-mwhesse-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>${project.artifactId}</name>
@@ -208,7 +208,7 @@
 	<scm>
 		<url>https://github.com/mwhesse/strategy-spring-security-acl.git</url>
 		<developerConnection>scm:git:https://github.com/mwhesse/strategy-spring-security-acl.git</developerConnection>
-		<tag>1.6.1-mwhesse-RELEASE</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<developers>
